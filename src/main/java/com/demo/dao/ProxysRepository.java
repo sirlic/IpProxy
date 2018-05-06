@@ -1,6 +1,6 @@
 package com.demo.dao;
 
-import com.demo.model.Course;
+
 import com.demo.model.Proxy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
