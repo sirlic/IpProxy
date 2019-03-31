@@ -40,4 +40,9 @@ public interface ProxysRepository extends CrudRepository<Proxy,Long> {
     int updateScoreDecByid(@Param(value = "id") long id);
 
     Proxy findProxyByIpAndPort(String ip,Integer port);
+
+    Iterable<Proxy> findProxiesByScoreGreaterThanOrderByScoreDesc(int score);
+
+    Proxy findFirstByAllocedFalseAndScoreGreaterThan(int score);
+
 }

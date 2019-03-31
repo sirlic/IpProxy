@@ -29,6 +29,9 @@ public class Proxy {
 
     private Integer score;
 
+    //表示正在使用
+    private boolean alloced;
+
     public Long getId() {
         return id;
     }
@@ -117,6 +120,14 @@ public class Proxy {
         this.score = score;
     }
 
+    public boolean isAlloced() {
+        return alloced;
+    }
+
+    public void setAlloced(boolean alloced) {
+        this.alloced = alloced;
+    }
+
     @Override
     public String toString() {
         return "Proxy{" +
@@ -131,6 +142,7 @@ public class Proxy {
                 ", createtime=" + createtime +
                 ", speed=" + speed +
                 ", score=" + score +
+                ", alloced=" + alloced +
                 '}';
     }
 }

@@ -16,13 +16,13 @@ public class ScheduleRunner {
     @Autowired
     private Validator validator;
 
-    @Scheduled(initialDelay = 1000,fixedDelay = 999999999)
+    @Scheduled(cron = "0 0 0 1/2 * ?")
     public void job1() {
         System.out.println(Thread.currentThread() + ", 开始爬虫@" + LocalTime.now());
         proxyCrawl.start();
     }
 
-    @Scheduled(initialDelay = 2000,fixedDelay = 999999999)
+    @Scheduled(cron = "0 0 0 1/1 * ?")
     public void validatorIp() {
         System.out.println(Thread.currentThread() + ", 开始检查ip@" + LocalTime.now());
         validator.start();
