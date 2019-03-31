@@ -1,31 +1,20 @@
-package com.demo.spider;
+package com.demo.spider.crawl;
 
 import com.demo.model.Proxy;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
+import com.demo.spider.IPageProcessor;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
-import us.codecraft.webmagic.Site;
-import us.codecraft.webmagic.Spider;
-import us.codecraft.webmagic.pipeline.ConsolePipeline;
-import us.codecraft.webmagic.processor.PageProcessor;
-import us.codecraft.webmagic.processor.example.GithubRepoPageProcessor;
 import us.codecraft.webmagic.selector.Selectable;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
-public class ProxyCrawl implements PageProcessor {
+public class Proxy_66ip extends IPageProcessor {
 
-    @Autowired
-    private ProxyPipeline proxyPipeline;
-
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(1000).setTimeOut(10000);
-    public  String url ="http://www.66ip.cn/%d.html";
+    public String host = "http://www.66ip.cn";
+    public  String url = host + "/%d.html";
     public  int i = 1;
     @Override
     public void process(Page page) {
@@ -61,21 +50,12 @@ public class ProxyCrawl implements PageProcessor {
     }
 
     @Override
-    public Site getSite() {
-        return site;
+    public boolean isMatch(Page page) {
+        return page.getRequest().getUrl().startsWith(host);
     }
 
-    public void start() {
-        Spider spider = Spider.create(this).addUrl(String.format(url,i))
-                .addPipeline(proxyPipeline).thread(1);
-        spider.run();
-    }
-
-    /** * 判断是否为合法IP * @return the ip */
-    public  boolean isboolIp(String ipAddress) {
-        String ip = "([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}";
-        Pattern pattern = Pattern.compile(ip);
-        Matcher matcher = pattern.matcher(ipAddress);
-        return matcher.matches();
+    @Override
+    public String getStartUrl() {
+        return String.format(url,i);
     }
 }

@@ -58,8 +58,9 @@ public class Validator {
             proxysRepository.updateById(proxy.getId(),http,types,speed,new Date());
             proxysRepository.updateScoreIncByid(proxy.getId());
         } else {
-            if (proxy.getScore() > 0) {
-                proxysRepository.updateScoreDecByid(proxy.getId());
+            proxysRepository.updateScoreDecByid(proxy.getId());
+            if (proxy.getScore() < -10) {
+                proxysRepository.delete(proxy.getId());
             }
         }
     }

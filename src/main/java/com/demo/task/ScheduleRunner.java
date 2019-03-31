@@ -1,6 +1,6 @@
 package com.demo.task;
 
-import com.demo.spider.ProxyCrawl;
+import com.demo.spider.ProxyManager;
 import com.demo.spider.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,7 +12,7 @@ import java.time.LocalTime;
 public class ScheduleRunner {
 
     @Autowired
-    public ProxyCrawl proxyCrawl;
+    public ProxyManager proxyCrawl;
     @Autowired
     private Validator validator;
 
