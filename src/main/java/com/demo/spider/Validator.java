@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 public class Validator {
 
-    private AtomicLong i ;
+    private AtomicLong i;
 
     @Autowired
     private ProxysRepository proxysRepository;
@@ -46,7 +46,7 @@ public class Validator {
         }
         value = _checkProxy(proxy.getIp(), proxy.getPort(), true);
         if (value != null) {
-            types  = value.types;
+            types = value.types;
             speed = value.speed;
             if (http == -1) {
                 http = Config.HTTPS;
@@ -55,17 +55,17 @@ public class Validator {
             }
         }
         if (http != -1) {
-            proxysRepository.updateById(proxy.getId(),http,types,speed,new Date());
+            proxysRepository.updateById(proxy.getId(), http, types, speed, new Date());
             proxysRepository.updateScoreIncByid(proxy.getId());
         } else {
             proxysRepository.updateScoreDecByid(proxy.getId());
-            if (proxy.getScore() < -10) {
+            if (proxy.getScore() < -5) {
                 proxysRepository.delete(proxy.getId());
             }
         }
     }
 
-    private Value _checkProxy(String ips,int port, boolean isHttp) {
+    private Value _checkProxy(String ips, int port, boolean isHttp) {
         Value value = new Value();
         value.http = isHttp ? Config.HTTP : Config.HTTPS;
 
@@ -112,7 +112,7 @@ public class Validator {
         } catch (Exception e) {
 
         } finally {
-            if (httpResp!=null) {
+            if (httpResp != null) {
                 try {
                     httpResp.close();
                 } catch (IOException e) {
@@ -142,29 +142,26 @@ public class Validator {
         i = new AtomicLong();
         i.set(0);
         ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(10);
-        for (;;) {
-            try {
-                Thread.sleep(500);
+        for (int j = 0; j < 10; j++) {
+            poolExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
 
-                System.out.println("-----"+i.get()+"-------"+poolExecutor.getQueue().size());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            if (poolExecutor.getQueue().size() <10) {
-                poolExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
+                    System.out.println("validator: -----start: "+Thread.currentThread().getName());
+                    for (; ; ) {
                         long andIncrement = i.getAndIncrement();
                         Proxy proxy = proxysRepository.findOne(andIncrement);
-
                         if (proxy != null) {
-                            System.out.println("-----"+i.get()+"-------");
-                            System.out.println(proxy);
+                            System.out.println("validator: -----" + i.get() + "-------");
+                            System.out.println(proxy + "\n");
                             checkHttpProxy(proxy);
+                        } else {
+                            break;
                         }
                     }
-                });
-            }
+                    System.out.println("validator: -----stop: "+Thread.currentThread().getName());
+                }
+            });
 
         }
 

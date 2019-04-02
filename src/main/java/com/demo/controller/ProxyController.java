@@ -4,6 +4,8 @@ import com.demo.bean.BaseResponse;
 import com.demo.bean.IpResult;
 import com.demo.dao.ProxysRepository;
 import com.demo.model.Proxy;
+import com.demo.spider.ProxyManager;
+import com.demo.spider.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +19,11 @@ import java.util.List;
 public class ProxyController {
     @Autowired
     private ProxysRepository repository;
+
+    @Autowired
+    public ProxyManager proxyCrawl;
+    @Autowired
+    private Validator validator;
 
     @RequestMapping(path = "/gets",produces = "application/json; charset=utf-8")
     @ResponseBody
@@ -37,15 +44,23 @@ public class ProxyController {
             Iterable<Proxy> all = repository.findAll();
             for (Proxy p : all) {
                 p.setAlloced(false);
-                repository.save(p);
             }
+            repository.save(all);
+            proxy = repository.findFirstByAllocedFalseAndScoreGreaterThan(0);
         }
-        proxy = repository.findFirstByAllocedFalseAndScoreGreaterThan(0);
+
         if (proxy != null) {
             proxy.setAlloced(true);
             repository.save(proxy);
         }
-        return new BaseResponse<IpResult>(new IpResult(proxy.getIp(),proxy.getPort(),proxy.getProtocol(),proxy.getScore()));
+        return new BaseResponse<IpResult>(proxy == null ? null : new IpResult(proxy.getIp(),proxy.getPort(),proxy.getProtocol(),proxy.getScore()));
+    }
+
+    @RequestMapping(path = "/startValidater",produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public BaseResponse startCrawl() {
+        validator.start();
+        return new BaseResponse(null);
     }
 
 }
