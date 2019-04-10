@@ -1,35 +1,28 @@
 package com.demo.spider;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.demo.dao.ProxysRepository;
 import com.demo.model.Proxy;
-import org.apache.http.HttpConnection;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import us.codecraft.webmagic.Spider;
 
-import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.Date;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.lang.Thread.sleep;
+
 @Component
 public class Validator {
 
-    private AtomicLong i;
-
     @Autowired
     private ProxysRepository proxysRepository;
+    private ScheduledThreadPoolExecutor mPoolExecutor;
+
 
     public void checkHttpProxy(Proxy proxy) {
 
@@ -54,6 +47,7 @@ public class Validator {
                 http = Config.HTTP_HTTPS;
             }
         }
+        proxy.setValided(true);
         if (http != -1) {
             proxysRepository.updateById(proxy.getId(), http, types, speed, new Date());
             proxysRepository.updateScoreIncByid(proxy.getId());
@@ -71,28 +65,24 @@ public class Validator {
 
         long start = System.currentTimeMillis();
         //设置代理IP、端口、协议（请分别替换）
-        HttpHost proxy = new HttpHost(ips, port);
-
-        //把代理设置到请求配置
-        RequestConfig defaultRequestConfig = RequestConfig.custom()
-                .setProxy(proxy)
-                .setConnectTimeout(Config.TIMEOUT)
-                .build();
-
-        //实例化CloseableHttpClient对象
-        CloseableHttpClient httpclient = HttpClients.custom().setDefaultRequestConfig(defaultRequestConfig).build();
         String url = isHttp ? Config.VALIDATOR_HTTP_URL : Config.VALIDATOR_HTTPS_URL;
-        //访问目标地址
-        HttpGet httpGet = new HttpGet(url);
 
-        CloseableHttpResponse httpResp = null;
+        java.net.Proxy proxy = new java.net.Proxy(java.net.Proxy.Type.HTTP, new InetSocketAddress(ips, port));
+
+        //设置代理,需要替换
+        HttpURLConnection conn = null;
         try {
-            //请求返回
-            httpResp = httpclient.execute(httpGet);
-            int statusCode = httpResp.getStatusLine().getStatusCode();
-            if (statusCode == HttpStatus.SC_OK) {
-                value.speed = System.currentTimeMillis() - start;
-                String str = EntityUtils.toString(httpResp.getEntity());
+            URL uri = new URL(url);
+            conn = (HttpURLConnection) uri.openConnection(proxy);
+            conn.setConnectTimeout(Config.TIMEOUT);
+            conn.setReadTimeout(Config.TIMEOUT);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            int responseCode = conn.getResponseCode();
+
+            System.out.println("响应：" + responseCode+":");
+            if (responseCode >= 200 && responseCode < 300) {
+                String str = IOUtils.toString(conn.getInputStream(), "utf-8");
                 System.out.println(str);
                 JSONObject jsonObject = JSONObject.parseObject(str);
                 JSONObject header = jsonObject.getJSONObject("headers");
@@ -106,19 +96,21 @@ public class Validator {
                     value.types = 0;
                 }
                 System.out.println(value);
+
                 return value;
-
             }
+            conn.getInputStream().close();
         } catch (Exception e) {
-
+            System.out.println("一场了");
         } finally {
-            if (httpResp != null) {
+            if (conn != null) {
                 try {
-                    httpResp.close();
-                } catch (IOException e) {
+                    conn.disconnect();
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
+
         }
         return null;
     }
@@ -139,20 +131,24 @@ public class Validator {
     }
 
     public void start() {
-        i = new AtomicLong();
-        i.set(0);
-        ScheduledThreadPoolExecutor poolExecutor = new ScheduledThreadPoolExecutor(10);
+        Iterable<Proxy> all = proxysRepository.findAll();
+        if (all != null) {
+            for(Proxy proxy : all) {
+                proxy.setValided(false);
+            }
+            proxysRepository.save(all);
+        }
+        mPoolExecutor = new ScheduledThreadPoolExecutor(10);
         for (int j = 0; j < 10; j++) {
-            poolExecutor.execute(new Runnable() {
+            mPoolExecutor.execute(new Runnable() {
                 @Override
                 public void run() {
 
-                    System.out.println("validator: -----start: "+Thread.currentThread().getName());
+                    System.out.println("validator: -----start: " + Thread.currentThread().getName());
                     for (; ; ) {
-                        long andIncrement = i.getAndIncrement();
-                        Proxy proxy = proxysRepository.findOne(andIncrement);
+                        Proxy proxy = proxysRepository.findProxyByValidedIsFalse();
                         if (proxy != null) {
-                            System.out.println("validator: -----" + i.get() + "-------");
+                            System.out.println("validator: -----" + proxy.getId() + "-------" + new Date().toLocaleString());
                             System.out.println(proxy + "\n");
                             checkHttpProxy(proxy);
                         } else {
@@ -162,6 +158,11 @@ public class Validator {
                     System.out.println("validator: -----stop: "+Thread.currentThread().getName());
                 }
             });
+            try {
+                sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
         }
 
@@ -169,8 +170,8 @@ public class Validator {
 
     public static void main(String[] args) {
         Proxy proxy = new Proxy();
-        proxy.setIp("113.200.159.155");
-        proxy.setPort(9999);
+        proxy.setIp("218.89.14.142");
+        proxy.setPort(8060);
         new Validator().checkHttpProxy(proxy);
     }
 }

@@ -2,13 +2,14 @@ package com.demo.model;
 
 
 import org.hibernate.annotations.ColumnDefault;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.annotation.Generated;
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "proxys")
+@Table(name = "proxys" )
 public class Proxy {
 
     @Id
@@ -31,6 +32,9 @@ public class Proxy {
 
     //表示正在使用
     private boolean alloced;
+
+    //表示已经校验
+    private boolean valided = false;
 
     public Long getId() {
         return id;
@@ -128,6 +132,14 @@ public class Proxy {
         this.alloced = alloced;
     }
 
+    public boolean isValided() {
+        return valided;
+    }
+
+    public void setValided(boolean valided) {
+        this.valided = valided;
+    }
+
     @Override
     public String toString() {
         return "Proxy{" +
@@ -143,6 +155,7 @@ public class Proxy {
                 ", speed=" + speed +
                 ", score=" + score +
                 ", alloced=" + alloced +
+                ", valided=" + valided +
                 '}';
     }
 }

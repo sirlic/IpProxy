@@ -7,6 +7,7 @@ import com.demo.model.Proxy;
 import com.demo.spider.ProxyManager;
 import com.demo.spider.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -39,6 +40,7 @@ public class ProxyController {
     @RequestMapping(path = "/get",produces = "application/json; charset=utf-8")
     @ResponseBody
     public BaseResponse<IpResult> getProxy() {
+        System.out.println(Thread.currentThread()+"gerproxy");
         Proxy proxy = repository.findFirstByAllocedFalseAndScoreGreaterThan(0);
         if (proxy == null) {
             Iterable<Proxy> all = repository.findAll();
@@ -58,9 +60,23 @@ public class ProxyController {
 
     @RequestMapping(path = "/startValidater",produces = "application/json; charset=utf-8")
     @ResponseBody
-    public BaseResponse startCrawl() {
+    @Async
+    public BaseResponse startValidater() {
         validator.start();
         return new BaseResponse(null);
     }
 
+    @RequestMapping(path = "/startCrawel",produces = "application/json; charset=utf-8")
+    @ResponseBody
+    @Async
+    public BaseResponse startCrawel() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                proxyCrawl.start();
+            }
+        }).start();
+        return new BaseResponse(null);
+    }
 }

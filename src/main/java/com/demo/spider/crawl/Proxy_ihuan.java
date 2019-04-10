@@ -52,8 +52,10 @@ public class Proxy_ihuan extends IPageProcessor {
 
             }
         }
-        if (proxys != null) {
+        if (proxys != null && proxys.size() > 0) {
             page.putField("proxys", proxys);
+        } else {
+            return;
         }
 
         if (i < mPages.size()) {

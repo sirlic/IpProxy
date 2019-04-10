@@ -45,4 +45,6 @@ public interface ProxysRepository extends CrudRepository<Proxy,Long> {
 
     Proxy findFirstByAllocedFalseAndScoreGreaterThan(int score);
 
+    Proxy findProxyByValidedIsFalse();
+
 }
