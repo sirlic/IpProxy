@@ -99,7 +99,8 @@ public class ProxyManager implements PageProcessor {
     public void start() {
         if (spider == null) {
             spider = Spider.create(this)
-                    .addPipeline(proxyPipeline).thread(5);
+                    .setDownloader(new MyHttpClientDownloader())
+                    .addPipeline(proxyPipeline).thread(10);
             for (IPageProcessor pageProcessor : mList) {
                 spider.addUrl(pageProcessor.getStartUrl());
             }

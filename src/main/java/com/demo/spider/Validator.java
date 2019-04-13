@@ -146,7 +146,9 @@ public class Validator {
 
                     System.out.println("validator: -----start: " + Thread.currentThread().getName());
                     for (; ; ) {
-                        Proxy proxy = proxysRepository.findProxyByValidedIsFalse();
+                        Proxy proxy = proxysRepository.findFirstByValidedFalse();
+                        proxy.setValided(true);
+                        proxysRepository.save(proxy);
                         if (proxy != null) {
                             System.out.println("validator: -----" + proxy.getId() + "-------" + new Date().toLocaleString());
                             System.out.println(proxy + "\n");
